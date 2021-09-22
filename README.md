@@ -21,4 +21,4 @@ This function takes 6 arguments. The first two are required, and either `Ratio_o
 `Axis_Buffer = 10` is the minimum total percent of blank space you wish to leave around the top and the bottom of the graph (half of this space will appear on the top and half will appear on the bottom). Ten percent is the default. It is the minimum total percent of blank space around the top and the bottom because if rescaling is necessary to align the values across both y axes, it follows that more than 10 % of blank space will necessarily exist on at least one end of one of the y axes. To minimize blank space, you could preserve the scale of one of the y axes by setting the `Axis_Scale_to_Preserve` argument to either `'Primary'` or `'Secondary'`.
 
 
-This function was inspired by my labmate Sam Zuckerman's need to align 0 values across primary and secondary y axes.
+This function was inspired by my colleague Sam Zuckerman's need to align 0 values across primary and secondary y axes.
