@@ -3,7 +3,7 @@
 # Plots
 
 
-# Explanation
+# The Explanation
 
 # You might want to align a value (such as 0) on both the primary and secondary
 # vertical axes. Aligning values can't typically be done by default. You could
