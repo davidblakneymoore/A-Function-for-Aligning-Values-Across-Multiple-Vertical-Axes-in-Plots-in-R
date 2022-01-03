@@ -2,6 +2,10 @@
 # A Function for Aligning a Value on Primary and Secondary Vertical Axes on
 # Plots
 
+# David Moore
+
+# April 2021
+
 
 # The Explanation
 
