@@ -3,7 +3,6 @@
 # Plots
 
 # David Moore
-# University of New Hampshire Ecohydrology Lab
 # davidblakneymoore@gmail.com
 # April 2021
 
