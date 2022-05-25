@@ -116,10 +116,6 @@ Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function 
   }
   Primary_Vertical_Axis_Variable <- Data_Frame$Primary_Vertical_Axis_Variable
   Secondary_Vertical_Axis_Variable <- Data_Frame$Secondary_Vertical_Axis_Variable
-  # if (!missing(Data_Frame)) {
-  #   Primary_Vertical_Axis_Variable <- Data_Frame[[deparse(substitute(Primary_Vertical_Axis_Variable))]]
-  #   Secondary_Vertical_Axis_Variable <- Data_Frame[[deparse(substitute(Secondary_Vertical_Axis_Variable))]]
-  # }
   if (!is.numeric(Primary_Vertical_Axis_Variable)) {
     stop("'Primary_Vertical_Axis_Variable' must be numeric.")
   }
