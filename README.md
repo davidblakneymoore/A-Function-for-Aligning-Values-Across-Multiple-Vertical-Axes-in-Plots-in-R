@@ -8,7 +8,7 @@ This function takes 6 arguments. The first two are required, and either `Ratio_o
 
 `Secondary_Y_Axis_Variable` is a numeric vector - it's the variable you wish to appear on the secondary y axis.
 
-`Data_Frame` is an optional argument you can provide if both the 'Primary_Y_Axis_Variable' and 'Secondary_Y_Axis_Variable' arguments come from the same data frame and you only want to type the data frame name once.
+`Data_Frame` is an optional argument you can provide if both the `Primary_Y_Axis_Variable` and `Secondary_Y_Axis_Variable` arguments come from the same data frame and you only want to type the data frame name once.
 
 `Primary_Y_Axis_Value_to_Align = 0` is the value you wish to align on the primary y axis. The default value for this argument is `0`.
 
