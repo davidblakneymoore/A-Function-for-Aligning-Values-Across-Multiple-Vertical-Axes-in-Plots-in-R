@@ -103,10 +103,23 @@
 # The Function
 
 Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function <- function (Primary_Vertical_Axis_Variable, Secondary_Vertical_Axis_Variable, Data_Frame, Primary_Vertical_Axis_Value_to_Align = 0, Secondary_Vertical_Axis_Value_to_Align = 0, Ratio_of_Value_to_Align_to_Vertical_Axis_Range = NULL, Axis_Scale_to_Preserve = "Neither", Axis_Buffer = 10) {
+  Primary_Vertical_Axis_Variable_Name <- deparse(substitute(Primary_Vertical_Axis_Variable))
+  Secondary_Vertical_Axis_Variable_Name <- deparse(substitute(Secondary_Vertical_Axis_Variable))
   if (!missing(Data_Frame)) {
-    Primary_Vertical_Axis_Variable <- Data_Frame[[deparse(substitute(Primary_Vertical_Axis_Variable))]]
-    Secondary_Vertical_Axis_Variable <- Data_Frame[[deparse(substitute(Secondary_Vertical_Axis_Variable))]]
+    if (class(Data_Frame) != 'data.frame') {
+      stop ("'Data_Frame' must be of class 'data.frame'.")
+    }
+    Data_Frame <- Data_Frame[, c(Primary_Vertical_Axis_Variable_Name, Secondary_Vertical_Axis_Variable_Name)]
+    colnames(Data_Frame) <- c("Primary_Vertical_Axis_Variable", "Secondary_Vertical_Axis_Variable")
+  } else if (missing(Data_Frame)) {
+    Data_Frame <- data.frame(Primary_Vertical_Axis_Variable = Primary_Vertical_Axis_Variable_Name, Secondary_Vertical_Axis_Variable = Secondary_Vertical_Axis_Variable_Name)
   }
+  Primary_Vertical_Axis_Variable <- Data_Frame$Primary_Vertical_Axis_Variable
+  Secondary_Vertical_Axis_Variable <- Data_Frame$Secondary_Vertical_Axis_Variable
+  # if (!missing(Data_Frame)) {
+  #   Primary_Vertical_Axis_Variable <- Data_Frame[[deparse(substitute(Primary_Vertical_Axis_Variable))]]
+  #   Secondary_Vertical_Axis_Variable <- Data_Frame[[deparse(substitute(Secondary_Vertical_Axis_Variable))]]
+  # }
   if (!is.numeric(Primary_Vertical_Axis_Variable)) {
     stop("'Primary_Vertical_Axis_Variable' must be numeric.")
   }
@@ -136,7 +149,7 @@ Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function 
   if (Axis_Buffer < 0 | Axis_Buffer > 100) {
     stop ("'Axis_Buffer' must be a number between 0 and 100 (inclusive).")
   }
-  Values_to_Align <- data.frame(Primary_Vertical_Axis_Value_to_Align, Secondary_Vertical_Axis_Value_to_Align)
+  Metadata <- data.frame(Primary_Vertical_Axis_Variable = Primary_Vertical_Axis_Variable_Name, Secondary_Vertical_Axis_Variable = Secondary_Vertical_Axis_Variable_Name, Primary_Vertical_Axis_Value_to_Align = Primary_Vertical_Axis_Value_to_Align, Secondary_Vertical_Axis_Value_to_Align = Secondary_Vertical_Axis_Value_to_Align)
   Axis_Buffer <- 1 + Axis_Buffer / 100
   Minimum_Primary_Vertical_Axis_Variable_Value <- min(Primary_Vertical_Axis_Variable[is.finite(Primary_Vertical_Axis_Variable)])
   Maximum_Primary_Vertical_Axis_Variable_Value <- max(Primary_Vertical_Axis_Variable[is.finite(Primary_Vertical_Axis_Variable)])
@@ -205,7 +218,8 @@ Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function 
   }
   names(Primary_Vertical_Axis_Range) <- c("Minimum", "Maximum")
   names(Secondary_Vertical_Axis_Range) <- c("Minimum", "Maximum")
-  list(Primary_Vertical_Axis_Range = Primary_Vertical_Axis_Range, Secondary_Vertical_Axis_Range = Secondary_Vertical_Axis_Range, Values_to_Align = Values_to_Align)
+  Variable_Names <- c(Primary_Vertical_Axis_Variable = Primary_Vertical_Axis_Variable_Name, Secondary_Vertical_Axis_Variable = Secondary_Vertical_Axis_Variable_Name)
+  list(Primary_Vertical_Axis_Range = Primary_Vertical_Axis_Range, Secondary_Vertical_Axis_Range = Secondary_Vertical_Axis_Range, Metadata = Metadata)
 }
 
 
@@ -232,9 +246,9 @@ Practice_Data <- structure(list(Time = 1:100, Primary_Vertical_Axis_Variable = c
 #   Minimum   Maximum 
 # -1.216405  3.368943 
 # 
-# $Values_to_Align
-#   Primary_Vertical_Axis_Value_to_Align Secondary_Vertical_Axis_Value_to_Align
-# 1                                    0                                      0
+# $Metadata
+#   Primary_Vertical_Axis_Variable Secondary_Vertical_Axis_Variable Primary_Vertical_Axis_Value_to_Align Secondary_Vertical_Axis_Value_to_Align
+# 1 Primary_Vertical_Axis_Variable Secondary_Vertical_Axis_Variable                                    0                                      0
 
 # Finally, we'll graph the data.
 
@@ -245,30 +259,31 @@ with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab =
 mtext("Time", 1, 2.5)
 mtext("Primary Vertical Axis Variable", 2, 2.5)
 title("Unaligned Vertical Axes")
-abline(h = New_Axis_Limits$Values_to_Align$Primary_Vertical_Axis_Value_to_Align, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
 par(new = T)
 with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", axes = F))
 axis(4, pretty(Practice_Data$Secondary_Vertical_Axis_Variable))
 mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Values_to_Align$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
 with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab = "", ylim = New_Axis_Limits$Primary_Vertical_Axis_Range))
 axis(1, pretty(Practice_Data$Time))
 axis(2, pretty(New_Axis_Limits$Primary_Vertical_Axis_Range))
 mtext("Time", 1, 2.5)
 mtext("Primary Vertical Axis Variable", 2, 2.5)
 title("Aligned Vertical Axes")
-abline(h = New_Axis_Limits$Values_to_Align$Primary_Vertical_Axis_Value_to_Align, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
 par(new = T)
 with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", ylim = New_Axis_Limits$Secondary_Vertical_Axis_Range, axes = F))
 axis(4, pretty(New_Axis_Limits$Secondary_Vertical_Axis_Range))
 mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Values_to_Align$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
 par(mar = c(1, 1, 1, 1))
 plot(0, type = 'n', axes = F, ylab = "", xlab = "")
 legend("top", legend = c("Primary X Axis Variable", "Secondary X Axis Variable", "Primary Vertical Axis Value to Align", "Secondary Vertical Axis Value to Align"), pch = c(1, 1, NA, NA), lty = c(NA, NA, 2, 2), col = c(1:2, 1:2))
 
 # Here's another example.
 
+dev.off()
 Practice_Data <- data.frame(Time = 1:100, Primary_Vertical_Axis_Variable = sin(1:100 / 15) + rnorm(100, 0, 0.25), Secondary_Vertical_Axis_Variable = cos(1:100 / 15) + rnorm(100, 0.5, 0.25))
 (New_Axis_Limits <- Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function(Primary_Vertical_Axis_Variable, Secondary_Vertical_Axis_Variable, Practice_Data, Axis_Scale_to_Preserve = "Primary"))
 dev.off()
@@ -278,31 +293,31 @@ with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab =
 mtext("Time", 1, 2.5)
 mtext("Primary Vertical Axis Variable", 2, 2.5)
 title("Unaligned Vertical Axes")
-abline(h = New_Axis_Limits$Values_to_Align$Primary_Vertical_Axis_Value_to_Align, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
 par(new = T)
 with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", axes = F))
 axis(4, pretty(Practice_Data$Secondary_Vertical_Axis_Variable))
 mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Values_to_Align$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
 with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab = "", ylim = New_Axis_Limits$Primary_Vertical_Axis_Range))
 axis(1, pretty(Practice_Data$Time))
 axis(2, pretty(New_Axis_Limits$Primary_Vertical_Axis_Range))
 mtext("Time", 1, 2.5)
 mtext("Primary Vertical Axis Variable", 2, 2.5)
 title("Aligned Vertical Axes")
-abline(h = New_Axis_Limits$Values_to_Align$Primary_Vertical_Axis_Value_to_Align, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
 par(new = T)
 with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", ylim = New_Axis_Limits$Secondary_Vertical_Axis_Range, axes = F))
 axis(4, pretty(New_Axis_Limits$Secondary_Vertical_Axis_Range))
 mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Values_to_Align$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
 par(mar = c(1, 1, 1, 1))
 plot(0, type = 'n', axes = F, ylab = "", xlab = "")
 legend("top", legend = c("Primary X Axis Variable", "Secondary X Axis Variable", "Primary Vertical Axis Value to Align", "Secondary Vertical Axis Value to Align"), pch = c(1, 1, NA, NA), lty = c(NA, NA, 2, 2), col = c(1:2, 1:2))
-dev.off()
 
 # Here's one more example.
 
+dev.off()
 Practice_Data <- data.frame(Time = 1:100, Primary_Vertical_Axis_Variable = sin(1:100 / 15) + rnorm(100, 25, 0.25), Secondary_Vertical_Axis_Variable = cos(1:100 / 15) + rnorm(100, -15, 0.25))
 (New_Axis_Limits <- Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function(Primary_Vertical_Axis_Variable, Secondary_Vertical_Axis_Variable, Practice_Data, Primary_Vertical_Axis_Value_to_Align = 20, Secondary_Vertical_Axis_Value_to_Align = -10))
 dev.off()
@@ -312,25 +327,26 @@ with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab =
 mtext("Time", 1, 2.5)
 mtext("Primary Vertical Axis Variable", 2, 2.5)
 title("Unaligned Vertical Axes")
-abline(h = New_Axis_Limits$Values_to_Align$Primary_Vertical_Axis_Value_to_Align, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
 par(new = T)
 with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", axes = F))
 axis(4, pretty(Practice_Data$Secondary_Vertical_Axis_Variable))
 mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Values_to_Align$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
 with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab = "", ylim = New_Axis_Limits$Primary_Vertical_Axis_Range))
 axis(1, pretty(Practice_Data$Time))
 axis(2, pretty(New_Axis_Limits$Primary_Vertical_Axis_Range))
 mtext("Time", 1, 2.5)
 mtext("Primary Vertical Axis Variable", 2, 2.5)
 title("Aligned Vertical Axes")
-abline(h = New_Axis_Limits$Values_to_Align$Primary_Vertical_Axis_Value_to_Align, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
 par(new = T)
 with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", ylim = New_Axis_Limits$Secondary_Vertical_Axis_Range, axes = F))
 axis(4, pretty(New_Axis_Limits$Secondary_Vertical_Axis_Range))
 mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Values_to_Align$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
+abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
 par(mar = c(1, 1, 1, 1))
 plot(0, type = 'n', axes = F, ylab = "", xlab = "")
 legend("top", legend = c("Primary X Axis Variable", "Secondary X Axis Variable", "Primary Vertical Axis Value to Align", "Secondary Vertical Axis Value to Align"), pch = c(1, 1, NA, NA), lty = c(NA, NA, 2, 2), col = c(1:2, 1:2))
+
 dev.off()
