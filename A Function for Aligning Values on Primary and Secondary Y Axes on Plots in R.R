@@ -28,7 +28,8 @@
 
 # 'Values_to_Align = rep(0, length(list(...)))' are the values you wish to
 # align across the vertical axes. The default for this argument is a vector of
-# '0's.
+# '0's. This argument must be a numeric vector and it must contain the same
+# number of elements that there are variables being aligned.
 
 # 'Variable_Weights = rep((1 / length(list(...))), length(list(...)))' are the
 # weights assigned to each variable. To prevent certain variables from being
@@ -36,22 +37,27 @@
 # assigned to these variables, which ensures that these variables will take up
 # more of the plotting region (at the expense of other variables, of course).
 # The default for this argument is to assign all the variables the same weight.
-# This argument is a numeric vector, and all entries must be between '0' and
-# '1' (inclusive), and the sum of all of these values must be '1'.
+# This argument must be a numeric vector, all the entries must be nonnegative,
+# and it must contain the same number of elements as there are variables being
+# aligned.
 
 # 'Upper_Axis_Buffers = rep(0.05, length(list(...)))' are the minimum fractions
 # of blank space you wish to leave around the top of the graph for each
 # variable (above each variable's plotted points). The default for each
-# variable is '0.05' - in other words, 5 % of the space on the top of the graph
-# will be empty above each variable's plotted points. This argument must also
-# be numeric and must be between '0' and '1' (inclusive).
+# variable is '0.05' - in other words, at least 5 % of the space on the top of
+# the graph will be empty above each variable's plotted points. This argument
+# must be a numeric vector, all the entries must be between '0' and '1'
+# (inclusive), and it must contain the same number of elements as there are
+# variables being aligned.
 
 # 'Lower_Axis_Buffers = rep(0.05, length(list(...)))' are the minimum fractions
 # of blank space you wish to leave around the bottom of the graph for each
 # variable (below each variable's plotted points). The default for each
-# variable is '0.05' - in other words, 5 % of the space on the bottom of the
-# graph will be empty below each variable's plotted points. This argument must
-# also be numeric and must be between '0' and '1' (inclusive).
+# variable is '0.05' - in other words, at least 5 % of the space on the bottom
+# of the graph will be empty below each variable's plotted points. This
+# argument must be a numeric vector, all the entries must be between '0' and
+# '1' (inclusive), and it must contain the same number of elements as there are
+# variables being aligned.
 
 
 # The Function
@@ -89,6 +95,7 @@ Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to
     stop ("The 'Axis_Buffer' argument must contain a single numeric value that is between 0 and 1 (inclusive).")
   }
   Values_to_Align <- as.list(Values_to_Align)
+  Variable_Weights <- Variable_Weights / sum(Variable_Weights)
   Variable_Weights <- as.list(Variable_Weights)
   Number_of_Variables <- ncol(Data_Frame)
   Ranges <- lapply(Data_Frame, function (x) {
