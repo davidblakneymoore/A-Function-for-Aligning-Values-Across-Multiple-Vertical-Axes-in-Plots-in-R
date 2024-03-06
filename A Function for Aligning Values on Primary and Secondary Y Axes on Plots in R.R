@@ -18,7 +18,7 @@
 # perfectly across all vertical axes. This function returns the new axis limits
 # for all the vertical axes.
 
-# This function takes 5 arguments. Only the first is required.
+# This function takes 6 arguments. Only the first is required.
 
 # '...' are the numeric variables you wish to appear on the vertical axes.
 
@@ -38,12 +38,6 @@
 # The default for this argument is to assign all the variables the same weight.
 # This argument is a numeric vector, and all entries must be between '0' and
 # '1' (inclusive), and the sum of all of these values must be '1'.
-
-# 'Axis_Buffer = 0.05' is the minimum fraction of blank space you wish to
-# leave around the top and the bottom of the graph. The default is '0.05' - in
-# other words, 5 % of the space on the top of the graph will be empty, and 5 %
-# of the space on the bottom of the graph will be empty. This argument must
-# also be numeric and must be between '0' and '1' (inclusive).
 
 # 'Upper_Axis_Buffers = rep(0.05, length(list(...)))' are the minimum fractions
 # of blank space you wish to leave around the top of the graph for each
