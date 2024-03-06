@@ -45,10 +45,24 @@
 # of the space on the bottom of the graph will be empty. This argument must
 # also be numeric and must be between '0' and '1' (inclusive).
 
+# 'Upper_Axis_Buffers = rep(0.05, length(list(...)))' are the minimum fractions
+# of blank space you wish to leave around the top of the graph for each
+# variable (above each variable's plotted points). The default for each
+# variable is '0.05' - in other words, 5 % of the space on the top of the graph
+# will be empty above each variable's plotted points. This argument must also
+# be numeric and must be between '0' and '1' (inclusive).
+
+# 'Lower_Axis_Buffers = rep(0.05, length(list(...)))' are the minimum fractions
+# of blank space you wish to leave around the bottom of the graph for each
+# variable (below each variable's plotted points). The default for each
+# variable is '0.05' - in other words, 5 % of the space on the bottom of the
+# graph will be empty below each variable's plotted points. This argument must
+# also be numeric and must be between '0' and '1' (inclusive).
+
 
 # The Function
 
-Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to_Align = rep(0, length(list(...))), Variable_Weights = rep((1 / length(list(...))), length(list(...))), Axis_Buffer = 0.05) {
+Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to_Align = rep(0, length(list(...))), Variable_Weights = rep((1 / length(list(...))), length(list(...))), Upper_Axis_Buffers = rep(0.05, length(list(...))), Lower_Axis_Buffers = rep(0.05, length(list(...)))) {
   if (length(list(...)) <= 1) {
     stop ("There must be more than one variable to warrant aligning vertical axes.")
   }
@@ -109,9 +123,15 @@ Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to
       c((v[2] - ((v[2] - w) / (1 - Final_Ratio))), v[2])
     }
   }, v = Ranges, w = Values_to_Align, x = Ratios, SIMPLIFY = FALSE)
-  Final_Ranges <- lapply(New_Ranges, function (x) {
-    c((x[1] - (diff(c(x[1], x[2])) * Axis_Buffer)), (x[2] + (diff(c(x[1], x[2])) * Axis_Buffer)))
-  })
+  
+  # Final_Ranges <- lapply(New_Ranges, function (x) {
+  #   c((x[1] - (diff(c(x[1], x[2])) * Axis_Buffer)), (x[2] + (diff(c(x[1], x[2])) * Axis_Buffer)))
+  # })
+  
+  Final_Ranges <- mapply(function (x, y, z) {
+    c((x[1] - (diff(c(x[1], x[2])) * z)), (x[2] + (diff(c(x[1], x[2])) * y)))
+  }, x = New_Ranges, y = Upper_Axis_Buffers, z = Lower_Axis_Buffers, SIMPLIFY = FALSE)
+  
   names(Final_Ranges) <- Variable_Names
   Final_Ranges <- lapply(Final_Ranges, function (x) {
     names(x) <- c("Minimum", "Maximum")
