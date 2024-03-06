@@ -18,6 +18,9 @@
 # perfectly across all vertical axes. This function returns the new axis limits
 # for all the vertical axes.
 
+# This function should be used when the vertical axes contain variables that
+# are in different units or scales.
+
 # This function takes 6 arguments. Only the first is required.
 
 # '...' are the numeric variables you wish to appear on the vertical axes.
