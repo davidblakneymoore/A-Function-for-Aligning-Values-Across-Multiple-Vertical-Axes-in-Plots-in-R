@@ -150,7 +150,6 @@ Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to
   Ratios <- mapply(function (v, w) {
     (w - v[1]) / (v[2] - v[1])
   }, v = Ranges, w = Values_to_Align, SIMPLIFY = FALSE)
-  
   Final_Ratio <- sum(mapply(function (a, b) {
     a * b
   }, a = Ratios, b = Variable_Weights))
@@ -216,8 +215,32 @@ Variable_Weights <- c(0.75, 0.125, 0.125)
 
 # Finally, let's make a plot.
 
-par(mar = c(10, 4, 4, 10))
-plot(Variable_1 ~ Index, data = Data_Frame, xlab = "", ylab = "", yaxt = "n", ylim = Final_Vertical_Axis_Limits[[1]], pch = 20, main = "Aligning Values Across Multiple Vertical Axes")
+layout(matrix(c(1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5, 5), ncol = 6, byrow = TRUE), heights = c((1 / 3), (2 / 3)))
+par(mar = c(6, 5, 5, 3))
+plot(Variable_1 ~ Index, data = Data_Frame, xlab = "", ylab = "", main = "Variable 1", pch = 20)
+mtext("Index", 1, line = 2.5)
+mtext("Variable 1", 2, line = 2.5)
+plot(Variable_2 ~ Index, data = Data_Frame, xlab = "", ylab = "", main = "Variable 2", pch = 20, col = 2)
+mtext("Index", 1, line = 2.5)
+mtext("Variable 2", 2, line = 2.5)
+plot(Variable_3 ~ Index, data = Data_Frame, xlab = "", ylab = "", main = "Variable 3", pch = 20, col = 3)
+mtext("Index", 1, line = 2.5)
+mtext("Variable 3", 2, line = 2.5)
+par(mar = c(12, 6, 6, 12))
+plot(Variable_1 ~ Index, data = Data_Frame, xlab = "", ylab = "", yaxt = "n", pch = 20, main = "Multiple Vertical Axes With Values Not Aligned")
+axis(2, at = pretty(Data_Frame$Variable_1))
+mtext("Index", 1, line = 2.5)
+mtext("Variable 1", 2, line = 2.5)
+par(new = T)
+plot(Variable_2 ~ Index, data = Data_Frame, xlab = "", ylab = "", yaxt = "n", col = 2, pch = 20)
+axis(4, at = pretty(Data_Frame$Variable_2))
+mtext("Variable 2", 4, line = 2.5)
+par(new = T)
+plot(Variable_3 ~ Index, data = Data_Frame, xlab = "", ylab = "", yaxt = "n", col = 3, pch = 20)
+axis(4, at = pretty(Data_Frame$Variable_3), line = 5)
+mtext("Variable 3", 4, line = 7.5)
+legend("bottom", xpd = TRUE, inset = c(0, -0.3), title = expression(paste(bold("Variable"))), legend = 1:3, col = 1:3, pch = 20, horiz = T)
+plot(Variable_1 ~ Index, data = Data_Frame, xlab = "", ylab = "", yaxt = "n", ylim = Final_Vertical_Axis_Limits[[1]], pch = 20, main = "Multiple Vertical Axes With Values Aligned")
 axis(2, at = pretty(range(Final_Vertical_Axis_Limits[[1]])))
 mtext("Index", 1, line = 2.5)
 mtext("Variable 1", 2, line = 2.5)
