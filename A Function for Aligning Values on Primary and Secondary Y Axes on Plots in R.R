@@ -80,7 +80,7 @@ Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to
     Data_Frame <- Data_Frame[, which(colnames(Data_Frame) %in% sapply(match.call(expand.dots = FALSE)$..., deparse))]
   }
   if (!all(sapply(Data_Frame, is.numeric))) {
-    stop ("All columns of the data frame must contain numeric data.")
+    stop ("All variables to align must contain numeric data.")
   }
   if (length(Values_to_Align) != ncol(Data_Frame)) {
     stop ("The 'Values_to_Align' argument must have the same number of elements as there are variables to align across vertical axes.")
