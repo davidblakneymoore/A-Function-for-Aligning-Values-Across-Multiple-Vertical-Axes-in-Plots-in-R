@@ -91,11 +91,20 @@ Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to
   if (length(Variable_Weights) != ncol(Data_Frame)) {
     stop ("The 'Variable_Weights' argument must have the same number of elements as the 'Data_Frame' argument has columns.")
   }
-  if (!is.numeric(Variable_Weights) | any(Variable_Weights < 0) | any(Variable_Weights > 1) | (sum(Variable_Weights) != 1)) {
-    stop ("The 'Variable_Weights' argument must contain numeric values that are all greater than or equal to 0 and less than or equal to 1, and the values must sum to 1.")
+  if (!is.numeric(Variable_Weights) | any(Variable_Weights < 0)) {
+    stop ("The 'Variable_Weights' argument must contain numeric, nonnegative values.")
   }
-  if (!is.numeric(Axis_Buffer) | (Axis_Buffer < 0) | (Axis_Buffer > 1) | (length(Axis_Buffer) != 1)) {
-    stop ("The 'Axis_Buffer' argument must contain a single numeric value that is between 0 and 1 (inclusive).")
+  if (!is.numeric(Upper_Axis_Buffers) | any(Upper_Axis_Buffers < 0) | any(Upper_Axis_Buffers > 1)) {
+    stop ("The 'Upper_Axis_Buffers' argument must contain numeric values that are between 0 and 1 (inclusive).")
+  }
+  if (length(Upper_Axis_Buffers) != length(list(...))) {
+    stop ("The 'Upper_Axis_Buffers' argument must contain the same number of elements as there are variables to align across vertical axes.")
+  }
+  if (!is.numeric(Lower_Axis_Buffers) | any(Lower_Axis_Buffers < 0) | any(Lower_Axis_Buffers > 1)) {
+    stop ("The 'Lower_Axis_Buffers' argument must contain numeric values that are between 0 and 1 (inclusive).")
+  }
+  if (length(Lower_Axis_Buffers) != length(list(...))) {
+    stop ("The 'Lower_Axis_Buffers' argument must contain the same number of elements as there are variables to align across vertical axes.")
   }
   Values_to_Align <- as.list(Values_to_Align)
   Variable_Weights <- Variable_Weights / sum(Variable_Weights)
