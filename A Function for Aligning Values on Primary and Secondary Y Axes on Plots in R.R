@@ -8,95 +8,42 @@
 
 # The Explanation
 
-# You might want to align a value (such as 0) on both the primary and secondary
-# vertical axes. Aligning values can't typically be done by default. You could
-# manually define axis limits for both axes to align a value, but if you
-# manually choose values for these limits, you might end up with more space on
-# the top or the bottom of the graph than is desireable, or you may not be able
-# to line up the values across both axes perfectly.
+# You may want to align a value (such as '0') on primary and secondary (or even
+# tertiary or higher-order) vertical axes. Aligning values can't typically be
+# done by default and may be difficult to do manually.
 
-# Here is a function for determining how to optimally align a value on both the
-# primary and the secondary vertical axes such that there isn't unnecessary 
-# additional space on the top or the bottom of any graph and such that the two
-# values will perfectly align across both vertical axes. This function returns
-# the new axis limits for both the primary and the secondary vertical axes that
-# make the two values you wish to align across both vertical axes line up
-# perfectly.
+# Here is a function for determining how to optimally align values across
+# multiple vertical axes such that there isn't unnecessary  additional space on
+# the top or the bottom of any graph and such that the values will align
+# perfectly across all vertical axes. This function returns the new axis limits
+# for all the vertical axes.
 
-# More often than not, you'll probably want to line up the value of 0 across
-# both vertical axes, and you may want to preserve the primary vertical axis
-# scale and rescale the secondary vertical axis. This function is flexible and
-# allows you to align the axes at any value (you can even choose different
-# values for both axes) and it allows you to select which axis scale you wish
-# to preserve (you could also choose to preserve neither the primary or the
-# secondary vertical axis scales and have the algorithm choose the optimal
-# solution).
+# This function takes 5 arguments. Only the first is required.
 
-# To align both axes at particular values, a ratio must be calculated for each
-# axis. This ratio is the ratio of the distance of the value to align to the
-# minimum value of a particular variable to the distance of the maximum value
-# to the minimum value of this same variable. This ratio is calculated for both
-# axes. Ratios can be greater than 1 or less than 0 if the value you wish to
-# align is not within the range of that variable.
+# '...' are the numeric variables you wish to appear on the vertical axes.
 
-# This function takes 6 arguments. The first two are required, and either
-# 'Ratio_of_Value_to_Align_to_Vertical_Axis_Range' or 'Axis_Scale_to_Preserve'
-# must be provided as well.
-
-# 'Primary_Vertical_Axis_Variable' is a numeric vector - it's the variable you
-# wish to appear on the primary vertical axis.
-
-# 'Secondary_Vertical_Axis_Variable' is a numeric vector - it's the variable
-# you wish to appear on the secondary vertical axis.
-
-# 'Data_Frame' is an optional argument you can provide if both the
-# 'Primary_Vertical_Axis_Variable' and 'Secondary_Vertical_Axis_Variable'
+# 'Data_Frame' is an optional argument you can provide if all the '...'
 # arguments come from the same data frame and you only want to type the data
 # frame name once.
 
-# 'Primary_Vertical_Axis_Value_to_Align = 0' is the value you wish to align on
-# the primary vertical axis. The default value for this argument is 0.
+# 'Values_to_Align = rep(0, length(list(...)))' are the values you wish to
+# align across the vertical axes. The default for this argument is a vector of
+# '0's.
 
-# 'Secondary_Vertical_Axis_Value_to_Align = 0' is the value you wish to align
-# on the secondary vertical axis. The default value for this argument is 0.
+# 'Variable_Weights = rep((1 / length(list(...))), length(list(...)))' are the
+# weights assigned to each variable. To prevent certain variables from being
+# crowded near the top or the bottom of the plot, a greater weight can be
+# assigned to these variables, which ensures that these variables will take up
+# more of the plotting region (at the expense of other variables, of course).
+# The default for this argument is to assign all the variables the same weight.
+# This argument is a numeric vector, and all entries must be between '0' and
+# '1' (inclusive), and the sum of all of these values must be '1'.
 
-# 'Ratio_of_Value_to_Align_to_Vertical_Axis_Range' sets where on the vertical
-# axis the value to align is. For example, the values to align may both be 0,
-# and if the 'Ratio_of_Value_to_Align_to_Vertical_Axis_Range' is 0.5, the value
-# to align (0) will be exactly halfway up the vertical axis. If the
-# 'Ratio_of_Value_to_Align_to_Vertical_Axis_Range' is 0.25, the values to align
-# will both be a quarter of the way up both vertical axes from the bottom of
-# the plot. If this argument is a number between 0 and 1, the value to align
-# will be visible in the plotting region; if this argument is greater than 1 or
-# less than 0, the value to align will not appear in the plotting region, but
-# it will still be aligned on both vertical axes. This argument is required
-# only if the 'Axis_Scale_to_Preserve' argument is not provided.
-
-# 'Axis_Scale_to_Preserve = "Neither"' tells the function if the scale of one
-# of the vertical axes should be preserved and not rescaled at all. The three
-# possibilities for this argument are 'Primary', 'Secondary', and 'Neither',
-# with the latter being the default. This argument could be used if one of the
-# vertical axes is much more important than the other. For example, if you wish
-# to plot the primary vertical axis variable such that it takes up the entire
-# plotting region and is not rescaled by this function, you would set this
-# argument to 'Primary', and all of the rescaling would occur on the secondary
-# vertical axis. If the 'Ratio_of_Value_to_Align_to_Vertical_Axis_Range'
-# argument is not specified, this argument is required. It should be noted that
-# there are cases where it would be impossible to preserve one of the vertical
-# axis scales - for example, if one vertical axis variable had a maximum value
-# of 10 and a value to align of 15, and the other vertical axis variable had a
-# minimum value of 20 and a value to align of 15, there be no possible way to
-# plot all of the points while aligning both vertical axes at the value 15.
-
-# 'Axis_Buffer = 10' is the minimum total percent of blank space you wish to
-# leave around the top and the bottom of the graph (half of this space will
-# appear on the top and half will appear on the bottom). Ten percent is the
-# default. It is the minimum total percent of blank space around the top and
-# the bottom because if rescaling is necessary to align the values across both
-# vertical axes, it follows that more than 10 % of blank space will necessarily
-# exist on at least one end of one of the vertical axes. To minimize blank
-# space, you could preserve the scale of one of the vertical axes by setting
-# the 'Axis_Scale_to_Preserve' argument to either 'Primary' or 'Secondary'.
+# 'Axis_Buffer = 0.05' is the minimum fraction of blank space you wish to
+# leave around the top and the bottom of the graph. The default is '0.05' - in
+# other words, 5 % of the space on the top of the graph will be empty, and 5 %
+# of the space on the bottom of the graph will be empty. This argument must
+# also be numeric and must be between '0' and '1' (inclusive).
 
 
 # The Function
@@ -256,3 +203,5 @@ axis(4, at = pretty(range(Final_Vertical_Axis_Limits[[3]])), line = 5)
 mtext("Variable 3", 4, line = 7.5)
 abline(h = Values_to_Align[3], lty = 2)
 legend("bottom", xpd = TRUE, inset = c(0, -0.3), title = expression(paste(bold("Variable"))), legend = 1:3, col = 1:3, pch = 20, horiz = T)
+
+# This plot may be viewed in this repository.
