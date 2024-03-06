@@ -83,24 +83,24 @@ Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to
     stop ("All columns of the data frame must contain numeric data.")
   }
   if (length(Values_to_Align) != ncol(Data_Frame)) {
-    stop ("The 'Values_to_Align' argument must have the same number of elements as the 'Data_Frame' argument has columns.")
+    stop ("The 'Values_to_Align' argument must have the same number of elements as there are variables to align across vertical axes.")
   }
-  if (!is.numeric(Values_to_Align)) {
+  if (!is.numeric(Values_to_Align) | any(!is.finite(Values_to_Align))) {
     stop ("The 'Values_to_Align' argument must be numeric.")
   }
-  if (length(Variable_Weights) != ncol(Data_Frame)) {
-    stop ("The 'Variable_Weights' argument must have the same number of elements as the 'Data_Frame' argument has columns.")
+  if (length(Variable_Weights) != length(list(...))) {
+    stop ("The 'Variable_Weights' argument must have the same number of elements as there are variables to align across vertical axes.")
   }
-  if (!is.numeric(Variable_Weights) | any(Variable_Weights < 0)) {
+  if (!is.numeric(Variable_Weights) | any(Variable_Weights < 0) | any(!is.finite(Variable_Weights))) {
     stop ("The 'Variable_Weights' argument must contain numeric, nonnegative values.")
   }
-  if (!is.numeric(Upper_Axis_Buffers) | any(Upper_Axis_Buffers < 0) | any(Upper_Axis_Buffers > 1)) {
+  if (!is.numeric(Upper_Axis_Buffers) | any(Upper_Axis_Buffers < 0) | any(Upper_Axis_Buffers > 1) | any(!is.finite(Upper_Axis_Buffers))) {
     stop ("The 'Upper_Axis_Buffers' argument must contain numeric values that are between 0 and 1 (inclusive).")
   }
   if (length(Upper_Axis_Buffers) != length(list(...))) {
     stop ("The 'Upper_Axis_Buffers' argument must contain the same number of elements as there are variables to align across vertical axes.")
   }
-  if (!is.numeric(Lower_Axis_Buffers) | any(Lower_Axis_Buffers < 0) | any(Lower_Axis_Buffers > 1)) {
+  if (!is.numeric(Lower_Axis_Buffers) | any(Lower_Axis_Buffers < 0) | any(Lower_Axis_Buffers > 1) | any(!is.finite(Lower_Axis_Buffers))) {
     stop ("The 'Lower_Axis_Buffers' argument must contain numeric values that are between 0 and 1 (inclusive).")
   }
   if (length(Lower_Axis_Buffers) != length(list(...))) {
