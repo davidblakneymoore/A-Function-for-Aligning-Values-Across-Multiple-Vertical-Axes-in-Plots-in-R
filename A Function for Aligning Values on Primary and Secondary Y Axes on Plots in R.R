@@ -123,15 +123,9 @@ Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to
       c((v[2] - ((v[2] - w) / (1 - Final_Ratio))), v[2])
     }
   }, v = Ranges, w = Values_to_Align, x = Ratios, SIMPLIFY = FALSE)
-  
-  # Final_Ranges <- lapply(New_Ranges, function (x) {
-  #   c((x[1] - (diff(c(x[1], x[2])) * Axis_Buffer)), (x[2] + (diff(c(x[1], x[2])) * Axis_Buffer)))
-  # })
-  
   Final_Ranges <- mapply(function (x, y, z) {
     c((x[1] - (diff(c(x[1], x[2])) * z)), (x[2] + (diff(c(x[1], x[2])) * y)))
   }, x = New_Ranges, y = Upper_Axis_Buffers, z = Lower_Axis_Buffers, SIMPLIFY = FALSE)
-  
   names(Final_Ranges) <- Variable_Names
   Final_Ranges <- lapply(Final_Ranges, function (x) {
     names(x) <- c("Minimum", "Maximum")
