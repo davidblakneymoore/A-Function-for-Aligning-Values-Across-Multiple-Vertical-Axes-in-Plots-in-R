@@ -37,9 +37,9 @@
 # assigned to these variables, which ensures that these variables will take up
 # more of the plotting region (at the expense of other variables, of course).
 # The default for this argument is to assign all the variables the same weight.
-# This argument must be a numeric vector, all the entries must be nonnegative,
-# and it must contain the same number of elements as there are variables being
-# aligned.
+# This argument must be a numeric vector, all the entries must be finite and
+# nonnegative, and it must contain the same number of elements as there are
+# variables being aligned.
 
 # 'Upper_Axis_Buffers = rep(0.05, length(list(...)))' are the minimum fractions
 # of blank space you wish to leave around the top of the graph for each
