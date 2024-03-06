@@ -2,7 +2,7 @@
 
 This repository contains a function for aligning values across multiple vertical axes in plots in R. This function generates new axis limits for all vertical axes axis such that particular values on the various vertical axes are aligned vertically. The user defines these values to align. Though the example at the end of the R script uses `base` R plotting functions, these new axis limits can be used with plotting functions from any package.
 
-This function takes 5 arguments. Only the first is required.
+This function takes 6 arguments. Only the first is required.
 
 `...` are the numeric variables you wish to appear on the vertical axes.
 
@@ -12,6 +12,8 @@ This function takes 5 arguments. Only the first is required.
 
 `Variable_Weights = rep((1 / length(list(...))), length(list(...)))` are the weights assigned to each variable. To prevent certain variables from being crowded near the top or the bottom of the plot, a greater weight can be assigned to these variables, which ensures that these variables will take up more of the plotting region (at the expense of other variables, of course). The default for this argument is to assign all the variables the same weight. This argument is a numeric vector, and all entries must be between `0` and `1` (inclusive), and the sum of all of these values must be `1`.
 
-`Axis_Buffer = 0.05` is the minimum fraction of blank space you wish to leave around the top and the bottom of the graph. The default is `0.05` - in other words, 5 % of the space on the top of the graph will be empty, and 5 % of the space on the bottom of the graph will be empty. This argument must also be numeric and must be between `0` and `1` (inclusive).
+`Upper_Axis_Buffers = rep(0.05, length(list(...)))` are the minimum fractions of blank space you wish to leave around the top of the graph for each variable (above each variable's plotted points). The default for each variable is `0.05` - in other words, 5 % of the space on the top of the graph will be empty above each variable's plotted points. This argument must also be numeric and must be between `0` and `1` (inclusive).
+
+`Lower_Axis_Buffers = rep(0.05, length(list(...)))` are the minimum fractions of blank space you wish to leave around the bottom of the graph for each variable (below each variable's plotted points). The default for each variable is `0.05` - in other words, 5 % of the space on the bottom of the graph will be empty below each variable's plotted points. This argument must also be numeric and must be between `0` and `1` (inclusive).
 
 This function was inspired by my colleague Sam Zuckerman's need to align `0` values across primary and secondary vertical axes.
