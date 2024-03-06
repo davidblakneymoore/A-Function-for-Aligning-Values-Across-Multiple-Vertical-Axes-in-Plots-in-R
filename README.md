@@ -2,6 +2,8 @@
 
 This repository contains a function for aligning values across multiple vertical axes in plots in R. This function generates new axis limits for all vertical axes axis such that particular values on the various vertical axes are aligned vertically. The user defines these values to align. Though the example at the end of the R script uses `base` R plotting functions, these new axis limits can be used with plotting functions from any package.
 
+This function should be used when the vertical axes contain variables that are in different units or scales.
+
 This function takes 6 arguments. Only the first is required.
 
 `...` are the numeric variables you wish to appear on the vertical axes.
