@@ -101,7 +101,7 @@
 
 # The Function
 
-Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to_Align = rep(0, ncol(Data_Frame)), Variable_Weights = rep((1 / ncol(Data_Frame)), ncol(Data_Frame)), Axis_Buffer = 0.05) {
+Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to_Align = rep(0, length(list(...))), Variable_Weights = rep((1 / length(list(...))), length(list(...))), Axis_Buffer = 0.05) {
   if (length(list(...)) <= 1) {
     stop ("There must be more than one variable to warrant aligning vertical axes.")
   }
