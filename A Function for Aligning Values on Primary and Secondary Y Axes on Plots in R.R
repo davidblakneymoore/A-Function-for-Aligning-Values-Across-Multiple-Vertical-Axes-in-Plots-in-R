@@ -12,7 +12,7 @@
 # tertiary or higher-order) vertical axes. Aligning values can't typically be
 # done by default and may be difficult to do manually.
 
-# Here is a function for determining how to optimally align values across
+# Here is a function for determining how to align values optimally across
 # multiple vertical axes such that there isn't unnecessary  additional space on
 # the top or the bottom of any graph and such that the values will align
 # perfectly across all vertical axes. This function returns the new axis limits
