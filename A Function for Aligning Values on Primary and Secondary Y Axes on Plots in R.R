@@ -1,10 +1,9 @@
 
-# A Function for Aligning a Value on Primary and Secondary Vertical Axes on
-# Plots
+# A Function for Aligning Values Across Multiple Vertical Axes
 
 # David Moore
 # davidblakneymoore@gmail.com
-# April 2021
+# March 2024
 
 
 # The Explanation
@@ -102,247 +101,135 @@
 
 # The Function
 
-Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function <- function (Primary_Vertical_Axis_Variable, Secondary_Vertical_Axis_Variable, Data_Frame, Primary_Vertical_Axis_Value_to_Align = 0, Secondary_Vertical_Axis_Value_to_Align = 0, Ratio_of_Value_to_Align_to_Vertical_Axis_Range = NULL, Axis_Scale_to_Preserve = "Neither", Axis_Buffer = 10) {
-  Primary_Vertical_Axis_Variable_Name <- deparse(substitute(Primary_Vertical_Axis_Variable))
-  Secondary_Vertical_Axis_Variable_Name <- deparse(substitute(Secondary_Vertical_Axis_Variable))
-  if (!missing(Data_Frame)) {
-    if (class(Data_Frame) != 'data.frame') {
-      stop ("'Data_Frame' must be of class 'data.frame'.")
+Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to_Align = rep(0, ncol(Data_Frame)), Variable_Weights = rep((1 / ncol(Data_Frame)), ncol(Data_Frame)), Axis_Buffer = 0.05) {
+  if (length(list(...)) <= 1) {
+    stop ("There must be more than one variable to warrant aligning vertical axes.")
+  }
+  Variable_Names <- sapply(match.call(expand.dots = FALSE)$..., deparse)
+  if (missing(Data_Frame)) {
+    Data_Frame <- as.data.frame(list(...))
+    colnames(Data_Frame) <- sapply(match.call(expand.dots = FALSE)$..., deparse)
+  } else if (!missing(Data_Frame)) {
+    if (class(Data_Frame) != "data.frame") {
+      stop ("The 'Data_Frame' argument must be of class 'data.frame'.")
     }
-    Data_Frame <- Data_Frame[, c(Primary_Vertical_Axis_Variable_Name, Secondary_Vertical_Axis_Variable_Name)]
-    colnames(Data_Frame) <- c("Primary_Vertical_Axis_Variable", "Secondary_Vertical_Axis_Variable")
-  } else if (missing(Data_Frame)) {
-    Data_Frame <- data.frame(Primary_Vertical_Axis_Variable = Primary_Vertical_Axis_Variable_Name, Secondary_Vertical_Axis_Variable = Secondary_Vertical_Axis_Variable_Name)
+    Data_Frame <- Data_Frame[, which(colnames(Data_Frame) %in% sapply(match.call(expand.dots = FALSE)$..., deparse))]
   }
-  Primary_Vertical_Axis_Variable <- Data_Frame$Primary_Vertical_Axis_Variable
-  Secondary_Vertical_Axis_Variable <- Data_Frame$Secondary_Vertical_Axis_Variable
-  if (!is.numeric(Primary_Vertical_Axis_Variable)) {
-    stop("'Primary_Vertical_Axis_Variable' must be numeric.")
+  if (!all(sapply(Data_Frame, is.numeric))) {
+    stop ("All columns of the data frame must contain numeric data.")
   }
-  if (!is.numeric(Secondary_Vertical_Axis_Variable)) {
-    stop("'Secondary_Vertical_Axis_Variable' must be numeric.")
+  if (length(Values_to_Align) != ncol(Data_Frame)) {
+    stop ("The 'Values_to_Align' argument must have the same number of elements as the 'Data_Frame' argument has columns.")
   }
-  if (!is.numeric(Primary_Vertical_Axis_Value_to_Align) | length(Primary_Vertical_Axis_Value_to_Align) != 1) {
-    stop("'Primary_Vertical_Axis_Value_to_Align' must be a single numeric value.")
+  if (!is.numeric(Values_to_Align)) {
+    stop ("The 'Values_to_Align' argument must be numeric.")
   }
-  if (!is.numeric(Secondary_Vertical_Axis_Value_to_Align) | length(Secondary_Vertical_Axis_Value_to_Align) != 1) {
-    stop("'Secondary_Vertical_Axis_Value_to_Align' must be a single numeric value.")
+  if (length(Variable_Weights) != ncol(Data_Frame)) {
+    stop ("The 'Variable_Weights' argument must have the same number of elements as the 'Data_Frame' argument has columns.")
   }
-  if (!is.null(Ratio_of_Value_to_Align_to_Vertical_Axis_Range)) {
-    if (!is.numeric(Ratio_of_Value_to_Align_to_Vertical_Axis_Range) | length(Ratio_of_Value_to_Align_to_Vertical_Axis_Range) != 1) {
-      stop("'Ratio_of_Value_to_Align_to_Vertical_Axis_Range' must be a single numeric value.")
+  if (!is.numeric(Variable_Weights) | any(Variable_Weights < 0) | any(Variable_Weights > 1) | (sum(Variable_Weights) != 1)) {
+    stop ("The 'Variable_Weights' argument must contain numeric values that are all greater than or equal to 0 and less than or equal to 1, and the values must sum to 1.")
+  }
+  if (!is.numeric(Axis_Buffer) | (Axis_Buffer < 0) | (Axis_Buffer > 1) | (length(Axis_Buffer) != 1)) {
+    stop ("The 'Axis_Buffer' argument must contain a single numeric value that is between 0 and 1 (inclusive).")
+  }
+  Values_to_Align <- as.list(Values_to_Align)
+  Variable_Weights <- as.list(Variable_Weights)
+  Number_of_Variables <- ncol(Data_Frame)
+  Ranges <- lapply(Data_Frame, function (x) {
+    c(min(x), max(x))
+  })
+  Ranges <- mapply(function (x, y) {
+    if ((x[1] < y) & (x[2] < y)) {
+      x[2] <- y
+    } else if ((x[1] > y) & (x[2] > y)) {
+      x[1] <- y
     }
-    if (Ratio_of_Value_to_Align_to_Vertical_Axis_Range <= 0 | Ratio_of_Value_to_Align_to_Vertical_Axis_Range >= 1) {
-      warning ("'Ratio_of_Value_to_Align_to_Vertical_Axis_Range' should be a number between 0 and 1. If it isn't, the values to align will be outside of the plotting region, and you risk not having all the data points inside the plotting region.")
+    x
+  }, x = Ranges, y = Values_to_Align, SIMPLIFY = FALSE)
+  Ratios <- mapply(function (v, w) {
+    (w - v[1]) / (v[2] - v[1])
+  }, v = Ranges, w = Values_to_Align, SIMPLIFY = FALSE)
+  
+  Final_Ratio <- sum(mapply(function (a, b) {
+    a * b
+  }, a = Ratios, b = Variable_Weights))
+  New_Ranges <- mapply(function (u, v, w, x) {
+    if (x > Final_Ratio) {
+      c(v[1], (v[1] + ((w - v[1]) / Final_Ratio)))
+    } else if (x == Final_Ratio) {
+      c(v[1], v[2])
+    } else if (x < Final_Ratio) {
+      c((v[2] - ((v[2] - w) / (1 - Final_Ratio))), v[2])
     }
-  }
-  if (!(Axis_Scale_to_Preserve %in% c("Primary", "Secondary", "Neither")) | length(Axis_Scale_to_Preserve) != 1) {
-    stop ("'Axis_Scale_to_Preserve' must be a single item and it must be either 'Primary', 'Secondary', or 'Neither'.")
-  }
-  if (!is.numeric(Axis_Buffer) | length(Axis_Buffer) != 1) {
-    stop("'Axis_Buffer' must be a single numeric value.")
-  }
-  if (Axis_Buffer < 0 | Axis_Buffer > 100) {
-    stop ("'Axis_Buffer' must be a number between 0 and 100 (inclusive).")
-  }
-  Metadata <- data.frame(Primary_Vertical_Axis_Variable = Primary_Vertical_Axis_Variable_Name, Secondary_Vertical_Axis_Variable = Secondary_Vertical_Axis_Variable_Name, Primary_Vertical_Axis_Value_to_Align = Primary_Vertical_Axis_Value_to_Align, Secondary_Vertical_Axis_Value_to_Align = Secondary_Vertical_Axis_Value_to_Align)
-  Axis_Buffer <- 1 + Axis_Buffer / 100
-  Minimum_Primary_Vertical_Axis_Variable_Value <- min(Primary_Vertical_Axis_Variable[is.finite(Primary_Vertical_Axis_Variable)])
-  Maximum_Primary_Vertical_Axis_Variable_Value <- max(Primary_Vertical_Axis_Variable[is.finite(Primary_Vertical_Axis_Variable)])
-  Minimum_Secondary_Vertical_Axis_Variable_Value <- min(Secondary_Vertical_Axis_Variable[is.finite(Secondary_Vertical_Axis_Variable)])
-  Maximum_Secondary_Vertical_Axis_Variable_Value <- max(Secondary_Vertical_Axis_Variable[is.finite(Secondary_Vertical_Axis_Variable)])
-  Primary_Vertical_Axis_Buffer <- ((Maximum_Primary_Vertical_Axis_Variable_Value - Minimum_Primary_Vertical_Axis_Variable_Value) * Axis_Buffer - (Maximum_Primary_Vertical_Axis_Variable_Value - Minimum_Primary_Vertical_Axis_Variable_Value)) / 2
-  Secondary_Vertical_Axis_Buffer <- ((Maximum_Secondary_Vertical_Axis_Variable_Value - Minimum_Secondary_Vertical_Axis_Variable_Value) * Axis_Buffer - (Maximum_Secondary_Vertical_Axis_Variable_Value - Minimum_Secondary_Vertical_Axis_Variable_Value)) / 2
-  Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range <- (Primary_Vertical_Axis_Value_to_Align - Minimum_Primary_Vertical_Axis_Variable_Value) / (Maximum_Primary_Vertical_Axis_Variable_Value - Minimum_Primary_Vertical_Axis_Variable_Value)
-  Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range <- (Secondary_Vertical_Axis_Value_to_Align - Minimum_Secondary_Vertical_Axis_Variable_Value) / (Maximum_Secondary_Vertical_Axis_Variable_Value - Minimum_Secondary_Vertical_Axis_Variable_Value)
-  if (!is.null(Ratio_of_Value_to_Align_to_Vertical_Axis_Range)) {
-    if (Axis_Scale_to_Preserve == "Primary" & Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range != Ratio_of_Value_to_Align_to_Vertical_Axis_Range) {
-      stop ("You cannot preserve the primary vertical axis scale and set the ratio of the value to align to the vertical axis range to something other than what it is for the primary vertical axis")
-    }
-    if (Axis_Scale_to_Preserve == "Secondary" & Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range != Ratio_of_Value_to_Align_to_Vertical_Axis_Range) {
-      stop ("You cannot preserve the secondary vertical axis scale and set the ratio of the value to align to the vertical axis range to something other than what it is for the secondary vertical axis")
-    }
-  }
-  if (Axis_Scale_to_Preserve == "Primary" & ((Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range < 0 & (Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range < 1 & Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range > 0)) | (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range > 1 & (Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range < 1 & Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range > 0)) | (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range < 0 & Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range > 1) | (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range > 1 & Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range < 0))) {
-    warning ("If you try to preserve the primary axis scale while using these values to align, at least one data point will be outside of the plotting region")
-  }
-  if (Axis_Scale_to_Preserve == "Secondary" & ((Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range < 0 & (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range < 1 & Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range > 0)) | (Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range > 1 & (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range < 1 & Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range > 0)) | (Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range < 0 & Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range > 1) | (Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range > 1 & Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range < 0))) {
-    warning ("If you try to preserve the secondary axis scale while using these values to align, at least one data point will be outside of the plotting region")
-  }
-  if (Axis_Scale_to_Preserve == "Primary") {
-    Primary_Vertical_Axis_Range <- c(Minimum_Primary_Vertical_Axis_Variable_Value - Primary_Vertical_Axis_Buffer, Maximum_Primary_Vertical_Axis_Variable_Value + Primary_Vertical_Axis_Buffer)
-    Secondary_Vertical_Axis_Range <- if (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range > Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range) {
-      c(((Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range * Maximum_Secondary_Vertical_Axis_Variable_Value - Secondary_Vertical_Axis_Value_to_Align) / (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range - 1) - Secondary_Vertical_Axis_Buffer), Maximum_Secondary_Vertical_Axis_Variable_Value + Secondary_Vertical_Axis_Buffer)
-    } else if (Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range > Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range) {
-      c(Minimum_Secondary_Vertical_Axis_Variable_Value - Secondary_Vertical_Axis_Buffer, ((Secondary_Vertical_Axis_Value_to_Align - Minimum_Secondary_Vertical_Axis_Variable_Value + Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range * Minimum_Secondary_Vertical_Axis_Variable_Value) / Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range) + Secondary_Vertical_Axis_Buffer)
-    } else if (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range == Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range) {
-      c(Minimum_Secondary_Vertical_Axis_Variable_Value - Secondary_Vertical_Axis_Buffer, Maximum_Secondary_Vertical_Axis_Variable_Value + Secondary_Vertical_Axis_Buffer)
-    }
-  } else if (Axis_Scale_to_Preserve == "Secondary") {
-    Primary_Vertical_Axis_Range <- if (Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range > Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range) {
-      c(((Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range * Maximum_Primary_Vertical_Axis_Variable_Value - Primary_Vertical_Axis_Value_to_Align) / (Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range - 1)) - Primary_Vertical_Axis_Buffer, Maximum_Primary_Vertical_Axis_Variable_Value + Primary_Vertical_Axis_Buffer)
-    } else if (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range > Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range) {
-      c(Minimum_Primary_Vertical_Axis_Variable_Value - Primary_Vertical_Axis_Buffer, ((Primary_Vertical_Axis_Value_to_Align - Minimum_Primary_Vertical_Axis_Variable_Value + Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range * Minimum_Primary_Vertical_Axis_Variable_Value) / Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range) + Primary_Vertical_Axis_Buffer)
-    } else if (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range == Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range) {
-      c(Minimum_Primary_Vertical_Axis_Variable_Value - Primary_Vertical_Axis_Buffer, Maximum_Primary_Vertical_Axis_Variable_Value + Primary_Vertical_Axis_Buffer)
-    }
-    Secondary_Vertical_Axis_Range <- c(Minimum_Secondary_Vertical_Axis_Variable_Value - Secondary_Vertical_Axis_Buffer, Maximum_Secondary_Vertical_Axis_Variable_Value + Secondary_Vertical_Axis_Buffer)
-  } else if (Axis_Scale_to_Preserve == "Neither") {
-    if (is.null(Ratio_of_Value_to_Align_to_Vertical_Axis_Range)) {
-      if (mean(c(Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range, Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range)) > 0 & mean(c(Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range, Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range)) < 1) {
-        Ratio_of_Value_to_Align_to_Vertical_Axis_Range <- mean(c(Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range, Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range))
-      } else if (mean(c(Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range, Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range)) <= 0 & mean(c(Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range, Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range)) >= 1) {
-        stop ("Please supply a value for the 'Ratio_of_Value_to_Align_to_Vertical_Axis_Range' argument between 0 and 1 or specify which axis scale to preserve")
-      }
-    }
-    if (!is.null(Ratio_of_Value_to_Align_to_Vertical_Axis_Range)) {
-      Primary_Vertical_Axis_Range <- if (Ratio_of_Value_to_Align_to_Vertical_Axis_Range > Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range) {
-        c(((Ratio_of_Value_to_Align_to_Vertical_Axis_Range * Maximum_Primary_Vertical_Axis_Variable_Value - Primary_Vertical_Axis_Value_to_Align) / (Ratio_of_Value_to_Align_to_Vertical_Axis_Range - 1)) - Primary_Vertical_Axis_Buffer, Maximum_Primary_Vertical_Axis_Variable_Value + Primary_Vertical_Axis_Buffer)
-      } else if (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range > Ratio_of_Value_to_Align_to_Vertical_Axis_Range) {
-        c(Minimum_Primary_Vertical_Axis_Variable_Value - Primary_Vertical_Axis_Buffer, ((Primary_Vertical_Axis_Value_to_Align - Minimum_Primary_Vertical_Axis_Variable_Value + Ratio_of_Value_to_Align_to_Vertical_Axis_Range * Minimum_Primary_Vertical_Axis_Variable_Value) / Ratio_of_Value_to_Align_to_Vertical_Axis_Range) + Primary_Vertical_Axis_Buffer)
-      } else if (Ratio_of_Value_to_Align_to_Primary_Vertical_Axis_Range == Ratio_of_Value_to_Align_to_Vertical_Axis_Range) {
-        c(Minimum_Primary_Vertical_Axis_Variable_Value - Primary_Vertical_Axis_Buffer, Maximum_Primary_Vertical_Axis_Variable_Value + Primary_Vertical_Axis_Buffer)
-      }
-      Secondary_Vertical_Axis_Range <- if (Ratio_of_Value_to_Align_to_Vertical_Axis_Range > Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range) {
-        c(((Ratio_of_Value_to_Align_to_Vertical_Axis_Range * Maximum_Secondary_Vertical_Axis_Variable_Value - Secondary_Vertical_Axis_Value_to_Align) / (Ratio_of_Value_to_Align_to_Vertical_Axis_Range - 1) - Secondary_Vertical_Axis_Buffer), Maximum_Secondary_Vertical_Axis_Variable_Value + Secondary_Vertical_Axis_Buffer)
-      } else if (Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range > Ratio_of_Value_to_Align_to_Vertical_Axis_Range) {
-        c(Minimum_Secondary_Vertical_Axis_Variable_Value - Secondary_Vertical_Axis_Buffer, ((Secondary_Vertical_Axis_Value_to_Align - Minimum_Secondary_Vertical_Axis_Variable_Value + Ratio_of_Value_to_Align_to_Vertical_Axis_Range * Minimum_Secondary_Vertical_Axis_Variable_Value) / Ratio_of_Value_to_Align_to_Vertical_Axis_Range) + Secondary_Vertical_Axis_Buffer)
-      } else if (Ratio_of_Value_to_Align_to_Vertical_Axis_Range == Ratio_of_Value_to_Align_to_Secondary_Vertical_Axis_Range) {
-        c(Minimum_Secondary_Vertical_Axis_Variable_Value - Secondary_Vertical_Axis_Buffer, Maximum_Secondary_Vertical_Axis_Variable_Value + Secondary_Vertical_Axis_Buffer)
-      }
-    }
-  }
-  names(Primary_Vertical_Axis_Range) <- c("Minimum", "Maximum")
-  names(Secondary_Vertical_Axis_Range) <- c("Minimum", "Maximum")
-  Variable_Names <- c(Primary_Vertical_Axis_Variable = Primary_Vertical_Axis_Variable_Name, Secondary_Vertical_Axis_Variable = Secondary_Vertical_Axis_Variable_Name)
-  list(Primary_Vertical_Axis_Range = Primary_Vertical_Axis_Range, Secondary_Vertical_Axis_Range = Secondary_Vertical_Axis_Range, Metadata = Metadata)
+  }, v = Ranges, w = Values_to_Align, x = Ratios, SIMPLIFY = FALSE)
+  Final_Ranges <- lapply(New_Ranges, function (x) {
+    c((x[1] - (diff(c(x[1], x[2])) * Axis_Buffer)), (x[2] + (diff(c(x[1], x[2])) * Axis_Buffer)))
+  })
+  names(Final_Ranges) <- Variable_Names
+  Final_Ranges <- lapply(Final_Ranges, function (x) {
+    names(x) <- c("Minimum", "Maximum")
+    x
+  })
+  Final_Ranges
 }
 
 
-# Some Examples
+# An Example
 
-# Let's use this function on some made-up data.
+# Let's make up some data.
 
-# First, let's generate some made-up data.
+set.seed(100)
+Number_of_Rows <- 100
+Index <- seq_len(Number_of_Rows)
+Variable_1 <- rnorm(Number_of_Rows, -10, 1)
+Variable_2 <- rnorm(Number_of_Rows, 0, 1)
+Variable_3 <- rnorm(Number_of_Rows, 10, 1)
+Data_Frame <- data.frame(Index = Index, Variable_1 = Variable_1, Variable_2 = Variable_2, Variable_3 = Variable_3)
 
-Practice_Data <- structure(list(Time = 1:100, Primary_Vertical_Axis_Variable = c(0.22704042899679, 0.171051342676768, 0.295373359481899, -0.197259035434989, -0.0106160892114656, 0.272180464537922, 0.548317696212064, 0.504400776504627, 0.535175112037852, 0.659796660419012, 0.484022873006747, 0.763427914281607, 1.01081189342087, 0.527275244638451, 1.02383078435645, 1.45882365087558, 0.619781379385278, 0.763744028540586, 1.56149872523748, 0.761000711707437, 1.20256603840857, 1.43775188297997, 1.05673949785171, 0.518392125919475, 1.10425689105379, 1.20426420764684, 1.12529223989712, 1.03337726623079, 0.522392736613537, 1.0377445707734, 0.949129431418696, 0.88749352645862, 0.706750673059184, 1.11927992638128, 0.643802831565079, 0.580963521170729, 0.280812306532534, 0.405955699667226, 0.499546367013415, 0.215323600910484, 0.469390216058786, 0.107998238273562, 0.565848623209337, 0.438461976564328, 0.0794893087305955, 0.333158448049156, 0.0769172726926761, -0.0958625519933304, -0.130151514147602, -0.331509693974829, 0.148225925289188, -0.174324290137772, -0.263426646945512, -0.341728364415924, -0.292824499333797, -0.220595205386657, -0.618550875112797, -0.62516988554484, -0.700033330779136, -1.09048383643344, -0.975552527952654, -1.04506060742311, -1.06436653382086, -0.56805317310425, -0.620650403171538, -0.835356038838042, -1.43768831108067, -0.651915223485666, -0.819396073318896, -1.28116702074008, -1.06737589811338, -0.823345101786524, -1.00731194489684, -0.898716208745865, -1.39837716704215, -0.953665962132904, -0.792247569290499, -0.932917390477086, -0.979552707079592, -0.70979531634533, -0.965636099632769, -0.763054047249181, -0.871523201366529, -0.889065295594285, -0.123369211815544, -0.148037638597252, -0.509229428194743, -0.221119774271099, -0.720626428354862, -0.0334756549314663, -0.353400093836653, -0.328126733370992, -0.223630761255335, -0.0402857881524264, 0.0245243716799691, -0.0312054606871837, -0.0432666051538198, 0.22885949020795, 0.201716810783227, 0.0120535175986479), Secondary_Vertical_Axis_Variable = c(1.63740959611018, 1.37429416156773, 1.7264362715331, 1.38976759258664, 1.47463211754709, 1.65134539390083, 1.0919186370708, 1.26770812495284, 1.46936014318898, 1.10656685829106, 1.23052773147138, 1.36077127569478, 0.990987329649239, 1.11882901151116, 0.878714793952109, 1.16166953910259, 0.964958583171444, 0.804964669734433, 0.68732580012754, 0.443884606344239, 0.810981320732856, 0.245770796791638, 0.592722723930691, 0.329330235065464, 0.57436503268312, 0.63685295911431, 0.123219925587219, 0.390659623189359, -0.0114827721228556, 0.418740497704195, 0.249715857124004, -0.190367436810004, 0.107154603862054, -0.340945339223141, -0.141589176380839, 0.120991236283374, -0.239887869541591, 0.174183052346282, -0.69572254518649, -0.5114071971833, -0.864715784368171, -0.239227387010985, -0.514520927766591, -0.751706645648148, -0.225934947865732, -0.481988260485633, -0.232578600951792, -1.07626933898627, -0.170793617580938, -0.231383477923837, -0.355701342540428, -0.617327238023798, -0.578072688376317, -0.68401185536377, -0.0858054671635022, -0.089108612614218, -0.185399362520759, -0.282936788213533, -0.252449270236627, 0.303213620586943, -0.046152318867939, 0.0144079948789615, -0.313823212539516, 0.377953119771485, 0.413510854925381, 0.121129021607843, 0.412681527426005, 0.0168148967398252, 0.271122213174506, 0.395392461768439, -0.293262298878551, 0.207836189544246, 0.305441059609931, 0.644398211101786, 0.66829536610808, 1.41967809324598, 0.769306300795675, 1.40234035467878, 1.07829219210413, 1.1974265963385, 0.904662337372966, 1.25524568926821, 1.13503718342011, 1.38176421012862, 1.53749356890857, 1.26610491046628, 1.23479527949536, 1.37917010148661, 1.63482743027776, 1.55700321201225, 1.39362336569581, 1.62327684235889, 1.56450925921758, 1.16370193835118, 1.45332914326502, 1.64613004798911, 1.60973560274891, 1.10951940096566, 1.60349635543919, 1.49436696791733)), class = "data.frame", row.names = c(NA, -100L))
+# Let's say that we want to align the values -2, 0, and 0 across the three
+# vertical axes, respectively.
 
-# Next, let's run the function to determine what our vertical axis limits will
-# be.
+Values_to_Align = c(-2, 0, 0)
 
-(New_Axis_Limits <- Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function(Primary_Vertical_Axis_Variable, Secondary_Vertical_Axis_Variable, Practice_Data, Ratio_of_Value_to_Align_to_Vertical_Axis_Range = 0.25))
+# Let's also weigh the first variable more heavily than the other two.
 
-# Here's the output from the preceding line of code.
+Variable_Weights <- c(0.75, 0.125, 0.125)
 
-# $Primary_Vertical_Axis_Range
-#   Minimum   Maximum 
-# -1.587648  4.463024 
+# Let's calculate the new axis limits that will allow these values to align.
+
+(Final_Vertical_Axis_Limits <- Aligning_Multiple_Vertical_Axes_Function(Variable_1, Variable_2, Variable_3, Data_Frame = Data_Frame, Values_to_Align = Values_to_Align, Variable_Weights = Variable_Weights))
+
+# Let's look at the output.
+
+# $Variable_1
+#    Minimum    Maximum 
+# -12.904407   1.010182 
 # 
-# $Secondary_Vertical_Axis_Range
+# $Variable_2
 #   Minimum   Maximum 
-# -1.216405  3.368943 
+# -9.945447  2.745460 
 # 
-# $Metadata
-#   Primary_Vertical_Axis_Variable Secondary_Vertical_Axis_Variable Primary_Vertical_Axis_Value_to_Align Secondary_Vertical_Axis_Value_to_Align
-# 1 Primary_Vertical_Axis_Variable Secondary_Vertical_Axis_Variable                                    0                                      0
+# $Variable_3
+#   Minimum   Maximum 
+# -58.37154  16.11357 
 
-# Finally, we'll graph the data.
+# Finally, let's make a plot.
 
-dev.off()
-layout(matrix(c(1, 1, 2, 2, 3, 3, 3, 3), byrow = T, nrow = 2), heights = c(0.8, 0.2))
-par(mar = c(5, 5, 5, 5))
-with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab = ""))
-mtext("Time", 1, 2.5)
-mtext("Primary Vertical Axis Variable", 2, 2.5)
-title("Unaligned Vertical Axes")
-abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
+par(mar = c(10, 4, 4, 10))
+plot(Variable_1 ~ Index, data = Data_Frame, xlab = "", ylab = "", yaxt = "n", ylim = Final_Vertical_Axis_Limits[[1]], pch = 20, main = "Aligning Values Across Multiple Vertical Axes")
+axis(2, at = pretty(range(Final_Vertical_Axis_Limits[[1]])))
+mtext("Index", 1, line = 2.5)
+mtext("Variable 1", 2, line = 2.5)
+abline(h = Values_to_Align[1], lty = 2)
 par(new = T)
-with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", axes = F))
-axis(4, pretty(Practice_Data$Secondary_Vertical_Axis_Variable))
-mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
-with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab = "", ylim = New_Axis_Limits$Primary_Vertical_Axis_Range))
-axis(1, pretty(Practice_Data$Time))
-axis(2, pretty(New_Axis_Limits$Primary_Vertical_Axis_Range))
-mtext("Time", 1, 2.5)
-mtext("Primary Vertical Axis Variable", 2, 2.5)
-title("Aligned Vertical Axes")
-abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
+plot(Variable_2 ~ Index, data = Data_Frame, xlab = "", ylab = "", yaxt = "n", ylim = Final_Vertical_Axis_Limits[[2]], col = 2, pch = 20)
+axis(4, at = pretty(range(Final_Vertical_Axis_Limits[[2]])))
+mtext("Variable 2", 4, line = 2.5)
+abline(h = Values_to_Align[2], lty = 2)
 par(new = T)
-with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", ylim = New_Axis_Limits$Secondary_Vertical_Axis_Range, axes = F))
-axis(4, pretty(New_Axis_Limits$Secondary_Vertical_Axis_Range))
-mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
-par(mar = c(1, 1, 1, 1))
-plot(0, type = 'n', axes = F, ylab = "", xlab = "")
-legend("top", legend = c("Primary X Axis Variable", "Secondary X Axis Variable", "Primary Vertical Axis Value to Align", "Secondary Vertical Axis Value to Align"), pch = c(1, 1, NA, NA), lty = c(NA, NA, 2, 2), col = c(1:2, 1:2))
-
-# Here's another example.
-
-dev.off()
-Practice_Data <- data.frame(Time = 1:100, Primary_Vertical_Axis_Variable = sin(1:100 / 15) + rnorm(100, 0, 0.25), Secondary_Vertical_Axis_Variable = cos(1:100 / 15) + rnorm(100, 0.5, 0.25))
-(New_Axis_Limits <- Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function(Primary_Vertical_Axis_Variable, Secondary_Vertical_Axis_Variable, Practice_Data, Axis_Scale_to_Preserve = "Primary"))
-dev.off()
-layout(matrix(c(1, 1, 2, 2, 3, 3, 3, 3), byrow = T, nrow = 2), heights = c(0.8, 0.2))
-par(mar = c(5, 5, 5, 5))
-with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab = ""))
-mtext("Time", 1, 2.5)
-mtext("Primary Vertical Axis Variable", 2, 2.5)
-title("Unaligned Vertical Axes")
-abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
-par(new = T)
-with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", axes = F))
-axis(4, pretty(Practice_Data$Secondary_Vertical_Axis_Variable))
-mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
-with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab = "", ylim = New_Axis_Limits$Primary_Vertical_Axis_Range))
-axis(1, pretty(Practice_Data$Time))
-axis(2, pretty(New_Axis_Limits$Primary_Vertical_Axis_Range))
-mtext("Time", 1, 2.5)
-mtext("Primary Vertical Axis Variable", 2, 2.5)
-title("Aligned Vertical Axes")
-abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
-par(new = T)
-with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", ylim = New_Axis_Limits$Secondary_Vertical_Axis_Range, axes = F))
-axis(4, pretty(New_Axis_Limits$Secondary_Vertical_Axis_Range))
-mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
-par(mar = c(1, 1, 1, 1))
-plot(0, type = 'n', axes = F, ylab = "", xlab = "")
-legend("top", legend = c("Primary X Axis Variable", "Secondary X Axis Variable", "Primary Vertical Axis Value to Align", "Secondary Vertical Axis Value to Align"), pch = c(1, 1, NA, NA), lty = c(NA, NA, 2, 2), col = c(1:2, 1:2))
-
-# Here's one more example.
-
-dev.off()
-Practice_Data <- data.frame(Time = 1:100, Primary_Vertical_Axis_Variable = sin(1:100 / 15) + rnorm(100, 25, 0.25), Secondary_Vertical_Axis_Variable = cos(1:100 / 15) + rnorm(100, -15, 0.25))
-(New_Axis_Limits <- Axis_Limits_for_Primary_and_Secondary_Vertical_Axes_Aligned_by_a_Value_Function(Primary_Vertical_Axis_Variable, Secondary_Vertical_Axis_Variable, Practice_Data, Primary_Vertical_Axis_Value_to_Align = 20, Secondary_Vertical_Axis_Value_to_Align = -10))
-dev.off()
-layout(matrix(c(1, 1, 2, 2, 3, 3, 3, 3), byrow = T, nrow = 2), heights = c(0.8, 0.2))
-par(mar = c(5, 5, 5, 5))
-with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab = ""))
-mtext("Time", 1, 2.5)
-mtext("Primary Vertical Axis Variable", 2, 2.5)
-title("Unaligned Vertical Axes")
-abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
-par(new = T)
-with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", axes = F))
-axis(4, pretty(Practice_Data$Secondary_Vertical_Axis_Variable))
-mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
-with(Practice_Data, plot(Time, Primary_Vertical_Axis_Variable, xlab = "", ylab = "", ylim = New_Axis_Limits$Primary_Vertical_Axis_Range))
-axis(1, pretty(Practice_Data$Time))
-axis(2, pretty(New_Axis_Limits$Primary_Vertical_Axis_Range))
-mtext("Time", 1, 2.5)
-mtext("Primary Vertical Axis Variable", 2, 2.5)
-title("Aligned Vertical Axes")
-abline(h = New_Axis_Limits$Metadata$Primary_Vertical_Axis_Value_to_Align, lty = 2)
-par(new = T)
-with(Practice_Data, plot(Time, Secondary_Vertical_Axis_Variable, col = 2, xlab = "", ylab = "", ylim = New_Axis_Limits$Secondary_Vertical_Axis_Range, axes = F))
-axis(4, pretty(New_Axis_Limits$Secondary_Vertical_Axis_Range))
-mtext("Secondary Vertical Axis Variable", 4, 2.5)
-abline(h = New_Axis_Limits$Metadata$Secondary_Vertical_Axis_Value_to_Align, col = 2, lty = 2)
-par(mar = c(1, 1, 1, 1))
-plot(0, type = 'n', axes = F, ylab = "", xlab = "")
-legend("top", legend = c("Primary X Axis Variable", "Secondary X Axis Variable", "Primary Vertical Axis Value to Align", "Secondary Vertical Axis Value to Align"), pch = c(1, 1, NA, NA), lty = c(NA, NA, 2, 2), col = c(1:2, 1:2))
-
-dev.off()
+plot(Variable_3 ~ Index, data = Data_Frame, xlab = "", ylab = "", yaxt = "n", ylim = Final_Vertical_Axis_Limits[[3]], col = 3, pch = 20)
+axis(4, at = pretty(range(Final_Vertical_Axis_Limits[[3]])), line = 5)
+mtext("Variable 3", 4, line = 7.5)
+abline(h = Values_to_Align[3], lty = 2)
+legend("bottom", xpd = TRUE, inset = c(0, -0.3), title = expression(paste(bold("Variable"))), legend = 1:3, col = 1:3, pch = 20, horiz = T)
