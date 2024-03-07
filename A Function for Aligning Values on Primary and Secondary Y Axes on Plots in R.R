@@ -14,12 +14,12 @@
 
 # Here is a function for determining how to align values optimally across
 # multiple vertical axes such that there isn't unnecessary  additional space on
-# the top or the bottom of any graph and such that the values will align
-# perfectly across all vertical axes. This function returns the new axis limits
-# for all the vertical axes.
+# the top or the bottom of any graph and such that the specified values will
+# align perfectly across all vertical axes. This function returns the new axis
+# limits for all the vertical axes being aligned.
 
-# This function should be used when the vertical axes contain variables that
-# are in different units.
+# This function may be used when the vertical axes contain variables that are
+# in different units.
 
 # This function takes 6 arguments. Only the first is required.
 
