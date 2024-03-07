@@ -65,7 +65,7 @@
 
 # The Function
 
-Aligning_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to_Align = rep(0, length(list(...))), Variable_Weights = rep((1 / length(list(...))), length(list(...))), Upper_Axis_Buffers = rep(0.05, length(list(...))), Lower_Axis_Buffers = rep(0.05, length(list(...)))) {
+Aligning_Values_Across_Multiple_Vertical_Axes_Function <- function (..., Data_Frame, Values_to_Align = rep(0, length(list(...))), Variable_Weights = rep((1 / length(list(...))), length(list(...))), Upper_Axis_Buffers = rep(0.05, length(list(...))), Lower_Axis_Buffers = rep(0.05, length(list(...)))) {
   if (length(list(...)) <= 1) {
     stop ("There must be more than one variable to warrant aligning vertical axes.")
   }
@@ -171,7 +171,7 @@ Variable_Weights <- c(0.75, 0.125, 0.125)
 
 # Let's calculate the new axis limits that will allow these values to align.
 
-(Final_Vertical_Axis_Limits <- Aligning_Multiple_Vertical_Axes_Function(Variable_1, Variable_2, Variable_3, Data_Frame = Data_Frame, Values_to_Align = Values_to_Align, Variable_Weights = Variable_Weights))
+(Final_Vertical_Axis_Limits <- Aligning_Values_Across_Multiple_Vertical_Axes_Function(Variable_1, Variable_2, Variable_3, Data_Frame = Data_Frame, Values_to_Align = Values_to_Align, Variable_Weights = Variable_Weights))
 
 # Let's look at the output.
 
