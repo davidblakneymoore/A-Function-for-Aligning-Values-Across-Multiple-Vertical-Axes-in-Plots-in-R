@@ -23,7 +23,7 @@
 
 # This function takes 6 arguments. Only the first is required.
 
-# '...' are the numeric variables you wish to appear on the vertical axes.
+# '...' are the numeric variables comprising the vertical axes.
 
 # 'Data_Frame' is an optional argument you can provide if all the '...'
 # arguments come from the same data frame and you only want to type the data
